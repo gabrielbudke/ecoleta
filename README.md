@@ -1,7 +1,5 @@
-<div align="center">
-  <a href="https://blusoft.org.br/home/entra-21/">
-    <img src="web/src/assets/logo.svg" alt="Ecoleta">
-  </a>
+<div align="center">  
+    <img src="web/src/assets/logo.svg" alt="Ecoleta" width="220px">  
 </div>
 
 <h3 align="center">
