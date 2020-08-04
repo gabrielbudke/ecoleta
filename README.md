@@ -9,7 +9,7 @@
 </h3>
 
 <p align="center">
-  <img alt="Github language count" src="https://img.shields.io/github/languages/count/gabrielbudke/entra21?color=34cb79&style=plastic">
+  <img alt="Github language count" src="https://img.shields.io/github/languages/count/gabrielbudke/ecoleta?color=34cb79&style=plastic">
 
   <img alt="Made by Gabriel B Sousa" src="https://img.shields.io/badge/made%20by-Gabriel%20B%20Sousa-34cb79">
 </p>
