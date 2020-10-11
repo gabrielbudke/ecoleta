@@ -1,0 +1,7 @@
+image:
+  file: .gitpod.Dockerfile
+
+tasks:
+  # - init: 'echo "TODO: Replace with init/build command"'
+  - init: cd server
+    command: cd server/npm start
