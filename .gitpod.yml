@@ -4,4 +4,4 @@ image:
 tasks:
   # - init: 'echo "TODO: Replace with init/build command"'
   - before: cd server
-    command: npm install && npm start    
+    command: npm install && npm run dev    
