@@ -3,5 +3,6 @@ image:
 
 tasks:
   # - init: 'echo "TODO: Replace with init/build command"'
-  - before: cd server
-    command: npm install && npm run dev    
+  - before: npm install -g expo-cli
+  #- before: cd server
+  #  command: npm install && npm run dev    
