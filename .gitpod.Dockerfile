@@ -1,7 +1,7 @@
 FROM gitpod/workspace-full
 
 # Install custom tools, runtimes, etc.
-RUN brew install -g expo-cli
+# RUN brew install -g expo-cli
 
 
 # For example "bastet", a command-line tetris clone:
