@@ -79,9 +79,7 @@ class PointsController {
         const items = await knex('items')
             .join('point_items', 'point_items.item_id', '=', 'items.id')
             .where('point_items.point_id', id)
-            .select('items.title');
-
-        console.log(items);
+            .select('items.title');        
         
         return response.status(200).json({ point, items });
     }

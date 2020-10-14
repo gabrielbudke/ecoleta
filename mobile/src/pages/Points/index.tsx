@@ -1,22 +1,94 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Constants from 'expo-constants';
 import { Feather as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SvgUri } from 'react-native-svg';
+import * as Location from 'expo-location';
 
+import api from '../../services/api';
+
+interface Item {
+   id: number;
+   image_url: string;
+   title: string;
+}
+
+interface Points {
+   id: number;
+   image: string;
+   name: string;
+   latitude: number;
+   longitude: number;
+}
 
 const Points = () => {
-
    const navigation = useNavigation();
+
+   const [items, setItems] = useState<Item[]>([]);
+   const [points, setPoints] = useState<Points[]>([]);
+   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
+   const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
+
+   useEffect(() => {
+      async function loadPosition() {
+         const { status } = await Location.requestPermissionsAsync();
+
+         if (status !== 'granted') {
+            Alert.alert('Ooooops...', 'Precisamos de sua permissão para obter a localização');
+            return;
+         }
+
+         const location = await Location.getCurrentPositionAsync();
+
+         const { latitude, longitude } = location.coords;
+
+         setInitialPosition([latitude, longitude]);
+      }
+
+      loadPosition();
+
+   }, [])
+
+   useEffect(() => {
+      api.get('/omnistack/items/getItems').then(response => {
+         setItems(response.data);
+      });
+   }, []);
+
+   useEffect(() => {
+      api.get('/omnistack/points/getPoints', {
+         params: {
+            city: 'Blumenau',
+            uf: 'SC',
+            items: [1, 2, 6]
+         }
+      }).then(response => {
+         setPoints(response.data);
+      });
+   }, [])
+
 
    function handleNavigateBack() {
       navigation.goBack();
    }
 
-   function handleNavigateToDetail() {
-      navigation.navigate('Detail')
+   function handleNavigateToDetail(id: number) {
+      navigation.navigate('Detail', { point_id: id });
+   }
+
+   function handleSelectItem(id: number) {
+      const alreadySelected = selectedItems.findIndex(item => item === id);
+
+      if (alreadySelected >= 0) {
+         const filteredItems = selectedItems.filter(item => item !== id);
+
+         setSelectedItems(filteredItems);
+      } else {
+         setSelectedItems([...selectedItems, id]);
+      }
    }
 
    return (
@@ -25,174 +97,175 @@ const Points = () => {
             <TouchableOpacity onPress={handleNavigateBack}>
                <Icon name="arrow-left" size={20} color="#34CB79" />
             </TouchableOpacity>
-                        
-            <Text style={styles.title}>Bem vindo.</Text>         
+
+            <Text style={styles.title}>Bem vindo.</Text>
             <Text style={styles.description}>Encontre no mapa um ponto de coleta.</Text>
 
             <View style={styles.mapContainer}>
-               <MapView 
-                  style={styles.map} 
-                  initialRegion={{
-                     latitude: -26.8534006,
-                     longitude: -49.0945012,
-                     latitudeDelta: 0.014,
-                     longitudeDelta: 0.014,                     
-                  }} 
-               >
-                  <Marker 
-                     style={styles.mapMarker}
-                     onPress={handleNavigateToDetail}
-                     coordinate={{
-                        latitude: -26.8534919,
-                        longitude: -49.0933789,
-                     }} 
+
+               {initialPosition[0] !== 0 && (
+                  <MapView
+                     style={styles.map}
+                     initialRegion={{
+                        // latitude: -26.8534006
+                        // longitude: -49.0945012,
+                        latitude: initialPosition[0],
+                        longitude: initialPosition[1],
+                        latitudeDelta: 0.014,
+                        longitudeDelta: 0.014,
+                     }}
                   >
-                     <View style={styles.mapMarkerContainer}>
-                        <Image style={styles.mapMarkerImage} source={{ uri: 'https://images.unsplash.com/photo-1556767576-5ec41e3239ea?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=450&q=45' }} />
-                        <Text style={styles.mapMarkerTitle}>Mercado</Text>
-                     </View>
 
-                  </Marker>
+                     {points.map(point => (
+                        <Marker
+                           key={String(point.id)}
+                           style={styles.mapMarker}
+                           onPress={() => handleNavigateToDetail(point.id)}
+                           coordinate={{
+                              //latitude: -26.8534919,
+                              //longitude: -49.0933789,
+                              latitude: point.latitude,
+                              longitude: point.longitude
+                           }}
+                        >
+                           <View style={styles.mapMarkerContainer}>
+                              <Image style={styles.mapMarkerImage} source={{ uri: point.image }} />
+                              <Text style={styles.mapMarkerTitle}>{point.name}</Text>
+                           </View>
 
-               </MapView>
+                        </Marker>
+
+                     ))}
+
+                  </MapView>
+
+               )}
+
             </View>
          </View>
 
          <View style={styles.itemsContainer}>
-            <ScrollView 
-               horizontal 
+            <ScrollView
+               horizontal
                showsHorizontalScrollIndicator={false}
                contentContainerStyle={{ paddingHorizontal: 20 }}
             >
-               <TouchableOpacity style={styles.item} onPress={() => { console.log('Olá item') }} >
-                  <SvgUri width={42} height={42} uri="https://3333-beed4b02-2109-4b86-ac0d-9c1f3d3c2adc.ws-us02.gitpod.io/uploads/lampadas.svg"/>
-                  <Text style={styles.itemTitle}>Lâmpadas</Text>
-               </TouchableOpacity>
-
-               <TouchableOpacity style={styles.item} onPress={() => { console.log('Olá item') }} >
-                  <SvgUri width={42} height={42} uri="https://3333-beed4b02-2109-4b86-ac0d-9c1f3d3c2adc.ws-us02.gitpod.io/uploads/lampadas.svg"/>
-                  <Text style={styles.itemTitle}>Lâmpadas</Text>
-               </TouchableOpacity>
-
-               <TouchableOpacity style={styles.item} onPress={() => { console.log('Olá item') }} >
-                  <SvgUri width={42} height={42} uri="https://3333-beed4b02-2109-4b86-ac0d-9c1f3d3c2adc.ws-us02.gitpod.io/uploads/lampadas.svg"/>
-                  <Text style={styles.itemTitle}>Lâmpadas</Text>
-               </TouchableOpacity>
-
-               <TouchableOpacity style={styles.item} onPress={() => { console.log('Olá item') }} >
-                  <SvgUri width={42} height={42} uri="https://3333-beed4b02-2109-4b86-ac0d-9c1f3d3c2adc.ws-us02.gitpod.io/uploads/lampadas.svg"/>
-                  <Text style={styles.itemTitle}>Lâmpadas</Text>
-               </TouchableOpacity>
-
-               <TouchableOpacity style={styles.item} onPress={() => { console.log('Olá item') }} >
-                  <SvgUri width={42} height={42} uri="https://3333-beed4b02-2109-4b86-ac0d-9c1f3d3c2adc.ws-us02.gitpod.io/uploads/lampadas.svg"/>
-                  <Text style={styles.itemTitle}>Lâmpadas</Text>
-               </TouchableOpacity>
+               {items.map(item => (
+                  <TouchableOpacity
+                     key={String(item.id)}
+                     style={[
+                        styles.item,
+                        selectedItems.includes(item.id) ? styles.selectedItem : {}
+                     ]}
+                     onPress={() => { handleSelectItem(item.id) }}
+                     activeOpacity={0.3}
+                  >
+                     <SvgUri width={42} height={42} uri={item.image_url} />
+                     <Text style={styles.itemTitle}>{item.title}</Text>
+                  </TouchableOpacity>
+               ))}
 
             </ScrollView>
-
          </View>
-
-
       </>
    );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 20 + Constants.statusBarHeight,
-  },
+   container: {
+      flex: 1,
+      paddingHorizontal: 32,
+      paddingTop: 20 + Constants.statusBarHeight,
+   },
 
-  title: {
-    fontSize: 20,
-    fontFamily: 'Ubuntu_700Bold',
-    marginTop: 24,
-  },
+   title: {
+      fontSize: 20,
+      fontFamily: 'Ubuntu_700Bold',
+      marginTop: 24,
+   },
 
-  description: {
-    color: '#6C6C80',
-    fontSize: 16,
-    marginTop: 4,
-    fontFamily: 'Roboto_400Regular',
-  },
+   description: {
+      color: '#6C6C80',
+      fontSize: 16,
+      marginTop: 4,
+      fontFamily: 'Roboto_400Regular',
+   },
 
-  mapContainer: {
-    flex: 1,
-    width: '100%',
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginTop: 16,
-  },
+   mapContainer: {
+      flex: 1,
+      width: '100%',
+      borderRadius: 10,
+      overflow: 'hidden',
+      marginTop: 16,
+   },
 
-  map: {
-    width: '100%',
-    height: '100%',
-  },
+   map: {
+      width: '100%',
+      height: '100%',
+   },
 
-  mapMarker: {
-    width: 90,
-    height: 80, 
-  },
+   mapMarker: {
+      width: 90,
+      height: 80,
+   },
 
-  mapMarkerContainer: {
-    width: 90,
-    height: 70,
-    backgroundColor: '#34CB79',
-    flexDirection: 'column',
-    borderRadius: 8,
-    overflow: 'hidden',
-    alignItems: 'center'
-  },
+   mapMarkerContainer: {
+      width: 90,
+      height: 70,
+      backgroundColor: '#34CB79',
+      flexDirection: 'column',
+      borderRadius: 8,
+      overflow: 'hidden',
+      alignItems: 'center'
+   },
 
-  mapMarkerImage: {
-    width: 90,
-    height: 45,
-    resizeMode: 'cover',
-  },
+   mapMarkerImage: {
+      width: 90,
+      height: 45,
+      resizeMode: 'cover',
+   },
 
-  mapMarkerTitle: {
-    flex: 1,
-    fontFamily: 'Roboto_400Regular',
-    color: '#FFF',
-    fontSize: 13,
-    lineHeight: 23,
-  },
+   mapMarkerTitle: {
+      flex: 1,
+      fontFamily: 'Roboto_400Regular',
+      color: '#FFF',
+      fontSize: 13,
+      lineHeight: 23,
+   },
 
-  itemsContainer: {
-    flexDirection: 'row',
-    marginTop: 16,
-    marginBottom: 32,
-  },
+   itemsContainer: {
+      flexDirection: 'row',
+      marginTop: 16,
+      marginBottom: 32,
+   },
 
-  item: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#eee',
-    height: 120,
-    width: 120,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+   item: {
+      backgroundColor: '#fff',
+      borderWidth: 2,
+      borderColor: '#eee',
+      height: 120,
+      width: 120,
+      borderRadius: 8,
+      paddingHorizontal: 16,
+      paddingTop: 20,
+      paddingBottom: 16,
+      marginRight: 8,
+      alignItems: 'center',
+      justifyContent: 'space-between',
 
-    textAlign: 'center',
-  },
+      textAlign: 'center',
+   },
 
-  selectedItem: {
-    borderColor: '#34CB79',
-    borderWidth: 2,
-  },
+   selectedItem: {
+      borderColor: '#34CB79',
+      borderWidth: 2,
+   },
 
-  itemTitle: {
-    fontFamily: 'Roboto_400Regular',
-    textAlign: 'center',
-    fontSize: 13,
-  },
+   itemTitle: {
+      fontFamily: 'Roboto_400Regular',
+      textAlign: 'center',
+      fontSize: 13,
+   },
 });
 
 export default Points;

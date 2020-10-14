@@ -32,10 +32,7 @@ const Home = () => {
                   </Text>
                </View>
                <Text style={styles.buttonText}>Entrar</Text>
-
             </RectButton>
-
-
          </View>
       </ImageBackground>
    );
