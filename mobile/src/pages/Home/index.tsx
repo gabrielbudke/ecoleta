@@ -1,12 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Feather as Icon } from '@expo/vector-icons';
-import { View, ImageBackground, Image, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { View, ImageBackground, Image, Text, StyleSheet, TextInput } from 'react-native';
+import RNPickerSelect from 'react-native-picker-select';
 import { RectButton } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 
+import api from '../../services/api';
+
+interface IBGEUFResponse {
+  sigla: string;
+}
+
+
+
 const Home = () => {
 
+   const [ufs, setUfs] = useState<string[]>([]);
+
    const navigation = useNavigation();
+
+   // Desafio: Fazer a conexão com o IBGE para buscar as UFs e cities
+   // usando o (react-native-picker-select) como select para mobile.
+   useEffect(() => {
+      api.get<IBGEUFResponse[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados').then(response => {
+         const ufInitials = response.data.map(uf => uf.sigla);
+         setUfs(ufInitials);         
+      })
+   }, []);
+
+
    
    function handleNavigateToPoints() {
       navigation.navigate('Points');
@@ -25,6 +48,46 @@ const Home = () => {
          </View>
 
          <View style={styles.footer}>
+            
+            <TextInput 
+               style={styles.input} 
+               placeholder="Digite a UF"
+            />
+
+            <TextInput 
+               style={styles.input} 
+               placeholder="Digite a cidade"
+            />         
+            
+            {/*
+               <RNPickerSelect 
+                  placeholder={{ label: 'Selecione a UF...', value: null  }}                              
+                  items={
+                     [ {label: 'SC', value: 'SC'} ]
+                  }
+                  onValueChange={(value) => {console.log(value)}}
+                  useNativeAndroidPickerStyle={false}
+                  style={{ 
+                     inputAndroid: {
+                        height: 60,
+                        backgroundColor: '#FFF',
+                        borderRadius: 10,
+                        marginBottom: 8,
+                        paddingHorizontal: 24,
+                        fontSize: 16,
+                     },
+                     iconContainer: {
+                        top: 20,
+                        right: 20
+                     }
+                  }}
+                  Icon={() => {
+                     return <Ionicons name="md-arrow-down" size={24} color="#322153" />;
+                  }}
+               />
+            */}
+            
+
             <RectButton style={styles.button} onPress={handleNavigateToPoints}>
                <View style={styles.buttonIcon}>
                   <Text>
@@ -92,8 +155,10 @@ const styles = StyleSheet.create({
 
   buttonIcon: {
     height: 60,
-    width: 60,
+    width: 60,    
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -105,7 +170,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontFamily: 'Roboto_500Medium',
     fontSize: 16,
-  }
+  }  
 });
 
 export default Home;
